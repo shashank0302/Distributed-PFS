@@ -1,0 +1,177 @@
+syntax = "proto3";
+
+// Proto file for metaserver-client connections
+
+package pfsmeta;
+
+
+service metadataservice {
+    rpc initializeClient (initialData) returns (initialAck) {}
+    rpc createFile(CreateFileData) returns (PfsMetadata) {}
+    rpc openFile(PfsOpenFile) returns (PfsFileDescriptorId) {}
+    rpc writeFile(PfsWriteFile) returns (PfsMetadata) {}
+    rpc readFile(PfsReadFile) returns (PfsMetadata) {}
+    rpc Fstat(PfsFstatRequest) returns (PfsMetadata) {}
+    rpc DeleteFile(DeleteFileRequest) returns (DeleteFileResponse) {}
+    rpc CloseFile(CloseFileRequest) returns (CloseFileResponse) {}
+    rpc DisconnectClient(DisconnectClientRequest) returns (DisconnectClientResponse) {}
+    rpc TokenStream(stream TokenMessage) returns (stream TokenMessage) {}
+}
+
+
+message initialData {
+    string hostname = 1;
+    string port = 2;
+}
+
+message initialAck {
+    int32 client_id = 1;
+}
+
+message CreateFileData {
+    string filename = 1;
+    int32 stripe_width = 2;
+    int32 stripe_blocks = 3;
+    int32 pfs_block_size = 4;
+    int32 num_servers = 5;
+}
+
+message KeyPair {
+    int32 start = 1;
+    int32 end = 2;
+}
+
+message FileLocation {
+    KeyPair bytes = 1;
+    string location = 2;
+}
+
+
+message PfsFileRecipe {
+    int32 stripe_width = 1;
+    int32 stripe_blocks = 2;
+    int32 pfs_block_size = 3;
+}
+
+
+message PfsMetadata {
+    string filename = 1;
+    uint64 file_size = 2;
+    int64 ctime = 3;
+    int64 mtime = 4;
+    PfsFileRecipe recipe = 5;
+    int32 unique_id = 6;
+    string unique_file_identifier = 7;
+    repeated FileServerBlock block_addresses = 8;
+}
+
+message FileServerBlock {
+    string block_name = 1;
+    int32 server = 2;
+    uint64 starting_bytes_of_block = 3;
+    uint64 ending_bytes_of_block = 4;
+}
+
+message PfsOpenFile {
+    string filename = 1;
+    int32 mode = 2;
+    int32 client_id = 3;
+}
+
+message PfsFileDescriptorId {
+    int32 fd = 1;
+    PfsMetadata metadata = 2;
+}
+
+message PfsWriteFile {
+    int32 fd = 1;
+    int64 num_bytes = 2;
+    int64 offset = 3;
+}
+
+message PfsReadFile {
+    int32 fd = 1;
+    int64 num_bytes = 2;
+    int64 offset = 3;
+}
+
+message DeleteFileRequest {
+    string filename = 1;
+    int32 client_id  = 2;
+}
+
+message DeleteFileResponse {
+    PfsMetadata metadata = 1;
+    bool is_delete_delayed = 2;
+}
+message PfsFstatRequest {
+    int32 fd = 1; // File descriptor
+}
+
+message CloseFileRequest{
+    int32 fd = 1;
+    int32 client_id = 2;
+}
+
+message CloseFileResponse{
+    bool success = 1;
+    bool should_delete_file = 2;
+    PfsMetadata metadata = 3;
+}
+
+message DisconnectClientRequest{
+    int32 client_id = 1;
+}
+
+message DisconnectClientResponse{
+    bool success = 1;
+}
+
+message TokenMessage {
+    int32 client_id = 1;
+    oneof msg {
+        TokenRequest token_request = 2;
+        TokenResponse token_response = 3;
+        RevokeTokenRequest revoke_token_request = 4;
+        RevokeTokenResponse revoke_token_response = 5;
+    }
+}
+
+message TokenRequest {
+    string filename = 1;
+    uint64 start_offset = 2;
+    uint64 end_offset = 3;
+    int32 token_type = 4;
+    string unique_id = 5;
+ 
+}
+
+message TokenResponse {
+    bool success =1;
+    string error_message= 2;
+    string unique_id = 3;
+    repeated RangeMessage newTokens = 4;
+    repeated RangeMessage existingReadTokens = 5;
+    string filename = 6;
+}
+
+message RangeMessage {
+    uint64 start_offset = 1;
+    uint64 end_offset = 2;
+}
+
+
+message RevokeTokenRequest {
+    string filename = 1;
+    uint64 start_offset = 2;
+    uint64 end_offset = 3;
+    int32 token_type = 4;
+    string unique_id = 5;
+    bool is_call_close = 6;
+}
+
+message RevokeTokenResponse {
+    bool success = 1;
+    string unique_id = 2;
+    bool is_call_close = 3;
+}

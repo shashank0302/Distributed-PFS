@@ -1,0 +1,5 @@
+.vscode/*
+**.o
+**.pb.h
+**team_curious**
+.nfs*

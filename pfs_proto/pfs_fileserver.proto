@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+// Proto file for fileserver-client connections
+
+package pfsfile;
+
+service myservice {
+    rpc ConnectTest (something) returns (ack) {}
+    rpc WriteFile (FsWriteFileRequest) returns (FsWriteFileResponse) {}
+    rpc ReadFile (FsReadFileRequest) returns (FsReadFileResponse) {}
+    rpc DeleteFile(FsDeleteFileRequest) returns (FsDeleteFileResponse);
+}
+
+message something {
+    int32 aaa = 1;
+    int32 bbb = 2;
+    bytes data = 3;
+}
+
+message FsWriteFileRequest {
+    string filename = 1;
+    int32 start_block_offset = 2;
+    int32 end_block_offset = 3;
+    int32 pfs_block_size = 4;
+    bytes data = 5;
+    int32 server_no = 6;
+}
+
+message FsWriteFileResponse {
+    bool success = 1;
+    string message = 2;
+    bytes blockdata = 3;
+}
+
+message FsReadFileRequest {
+    string filename = 1;
+    uint64 start_block_offset = 2;
+    uint64 end_block_offset = 3;
+    int32 pfs_block_size = 4;
+    int32 server_no = 5;
+}
+
+message FsReadFileResponse {
+    bool success = 1;
+    bytes data = 2;
+    string message = 3;
+
+}
+
+message ack {
+    int32 val = 1;
+}
+
+message FsDeleteFileRequest {
+    string filename = 1;
+    int32 server_no = 2;
+}
+
+message FsDeleteFileResponse {
+    bool success = 1; 
+    string message = 2;
+}
